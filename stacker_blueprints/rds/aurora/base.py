@@ -117,6 +117,11 @@ class Cluster(Blueprint):
             "default": "",
             "description": "Internal domain name, if you have one."
         },
+        "AllowedCIDRs": {
+            "type": list,
+            "description": "List of CIDRs to allow for DB ingress",
+            "default": []
+        }
     }
 
     def engine(self):
@@ -179,6 +184,18 @@ class Cluster(Blueprint):
                 )
             )
             self.security_group = Ref(sg)
+
+            if variables["AllowedCIDRs"]:
+                for i, cidr in enumerate(variables["AllowedCIDRs"]):
+                    t.add_resource(
+                        ec2.SecurityGroupIngress(
+                            'DBSecurityGroupIngress{}'.format(i + 1),
+                            IpProtocol='tcp',
+                            FromPort=self.port(),
+                            ToPort=self.port(),
+                            CidrIp=cidr,
+                            GroupId=Ref(sg)))
+
         t.add_output(Output("SecurityGroup", Value=self.security_group))
 
     def get_master_endpoint(self):
@@ -270,3 +287,6 @@ class Cluster(Blueprint):
 class AuroraCluster(Cluster):
     def engine(self):
         return "aurora"
+
+    def port(self):
+        return 3306

@@ -163,6 +163,11 @@ class BaseRDS(Blueprint):
                            "database instance.",
             "default": {}
         },
+        "AllowedCIDRs": {
+            "type": list,
+            "description": "List of CIDRs to allow for DB ingress",
+            "default": []
+        }
     }
 
     def engine(self):
@@ -231,6 +236,17 @@ class BaseRDS(Blueprint):
                 )
             )
             self.security_group = Ref(sg)
+
+            if variables["AllowedCIDRs"]:
+                for i, cidr in enumerate(variables["AllowedCIDRs"]):
+                    t.add_resource(
+                        ec2.SecurityGroupIngress(
+                            'DBSecurityGroupIngress{}'.format(i + 1),
+                            IpProtocol='tcp',
+                            FromPort=self.port(),
+                            ToPort=self.port(),
+                            CidrIp=cidr,
+                            GroupId=Ref(sg)))
         t.add_output(Output("SecurityGroup", Value=self.security_group))
 
     def get_db_endpoint(self):
