@@ -8,6 +8,7 @@ class PostgresMixin(object):
     def port(self):
         return 5432
 
+
 class MasterInstance(PostgresMixin, MasterInstance):
     pass
 
