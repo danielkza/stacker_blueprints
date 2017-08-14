@@ -13,7 +13,7 @@ from stacker.blueprints.variables.types import CFNString
 
 RDS_ENGINES = ["MySQL", "oracle-se1", "oracle-se", "oracle-ee", "sqlserver-ee",
                "sqlserver-se", "sqlserver-ex", "sqlserver-web", "postgres",
-               "aurora"]
+               "aurora", "mariadb"]
 
 # Resource name constants
 SUBNET_GROUP = "RDSSubnetGroup"
