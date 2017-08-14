@@ -283,6 +283,15 @@ class BaseRDS(Blueprint):
             )
         )
 
+    def get_settings_attrs(self):
+        attrs = {}
+        if "OptionGroup" in self.template.resources:
+            attrs["OptionGroupName"] = Ref("OptionGroup")
+        if "ParameterGroup" in self.template.resources:
+            attrs["DBParameterGroupName"] = Ref("ParameterGroup")
+
+        return attrs
+
     def create_rds(self):
         t = self.template
         variables = self.get_variables()
@@ -406,15 +415,14 @@ class MasterInstance(BaseRDS):
                 "type": bool,
                 "description": "Set to 'false' to disable encrypted storage.",
                 "default": True,
-            },
-
+            }
         }
         variables.update(additional)
         return variables
 
     def get_common_attrs(self):
         variables = self.get_variables()
-        return {
+        attrs = {
             "AllocatedStorage": variables["AllocatedStorage"],
             "AllowMajorVersionUpgrade": variables["AllowMajorVersionUpgrade"],
             "AutoMinorVersionUpgrade": variables["AutoMinorVersionUpgrade"],
@@ -423,7 +431,6 @@ class MasterInstance(BaseRDS):
             "DBInstanceClass": variables["InstanceType"],
             "DBInstanceIdentifier": variables["DBInstanceIdentifier"],
             "DBSnapshotIdentifier": self.get_db_snapshot_identifier(),
-            "DBParameterGroupName": Ref("ParameterGroup"),
             "DBSubnetGroupName": Ref(SUBNET_GROUP),
             "Engine": self.engine() or variables["Engine"],
             "EngineVersion": variables["EngineVersion"],
@@ -432,7 +439,6 @@ class MasterInstance(BaseRDS):
             "MasterUsername": variables["MasterUser"],
             "MasterUserPassword": Ref("MasterUserPassword"),
             "MultiAZ": variables["MultiAZ"],
-            "OptionGroupName": Ref("OptionGroup"),
             "PreferredBackupWindow": variables["PreferredBackupWindow"],
             "PreferredMaintenanceWindow":
                 variables["PreferredMaintenanceWindow"],
@@ -440,6 +446,8 @@ class MasterInstance(BaseRDS):
             "VPCSecurityGroups": [self.security_group, ],
             "Tags": self.get_tags(),
         }
+        attrs.update(self.get_settings_attrs())
+        return attrs
 
 
 class ReadReplica(BaseRDS):
@@ -475,7 +483,7 @@ class ReadReplica(BaseRDS):
     def get_common_attrs(self):
         variables = self.get_variables()
 
-        return {
+        attrs = {
             "SourceDBInstanceIdentifier": variables["MasterDatabaseId"],
             "AllocatedStorage": variables["AllocatedStorage"],
             "AllowMajorVersionUpgrade": variables["AllowMajorVersionUpgrade"],
@@ -491,6 +499,8 @@ class ReadReplica(BaseRDS):
             "VPCSecurityGroups": [self.security_group, ],
             "Tags": self.get_tags(),
         }
+        attrs.update(self.get_settings_attrs())
+        return attrs
 
 
 class ClusterInstance(BaseRDS):
@@ -510,7 +520,7 @@ class ClusterInstance(BaseRDS):
     def get_common_attrs(self):
         variables = self.get_variables()
 
-        return {
+        attrs = {
             "DBClusterIdentifier": variables["DBClusterIdentifier"],
             "AllowMajorVersionUpgrade": variables["AllowMajorVersionUpgrade"],
             "AutoMinorVersionUpgrade": variables["AutoMinorVersionUpgrade"],
@@ -522,3 +532,5 @@ class ClusterInstance(BaseRDS):
             "LicenseModel": Ref("AWS::NoValue"),
             "Tags": self.get_tags(),
         }
+        attrs.update(self.get_settings_attrs())
+        return attrs
